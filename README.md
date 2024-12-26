@@ -1,6 +1,6 @@
 # Noon Talk PHP Script
 
-This PHP script handles push notifications for the Noon Talk application. Below are instructions on how to run the server and test it using the provided curl commands.
+This PHP script handles push notifications for the Noon Talk application using [Expo's Push Notification Service](https://docs.expo.dev/push-notifications/sending-notifications/). Below are instructions on how to run the server and test it using the provided curl commands.
 
 ## Running the Server
 
