@@ -1,0 +1,7 @@
+curl -X POST http://localhost:8080/send-single \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]",
+    "title": "Hello User",
+    "body": "This is a test notification message"
+  }' 

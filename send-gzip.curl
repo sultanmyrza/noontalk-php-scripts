@@ -1,0 +1,17 @@
+curl -X POST http://localhost:8080/send-gzip \
+  -H "Content-Type: application/json" \
+  -H "Accept-Encoding: gzip" \
+  -d '{
+    "notifications": [
+      {
+        "to": "ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]",
+        "title": "Gzip Message 1",
+        "body": "This is a compressed notification 1"
+      },
+      {
+        "to": "ExponentPushToken[YYYYYYYYYYYYYYYYYYYYY]",
+        "title": "Gzip Message 2",
+        "body": "This is a compressed notification 2"
+      }
+    ]
+  }' 

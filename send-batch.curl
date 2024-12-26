@@ -1,0 +1,21 @@
+curl -X POST http://localhost:8080/send-batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notifications": [
+      {
+        "to": "ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]",
+        "title": "Batch Message 1",
+        "body": "This is the first notification in batch"
+      },
+      {
+        "to": "ExponentPushToken[YYYYYYYYYYYYYYYYYYYYY]",
+        "title": "Batch Message 2",
+        "body": "This is the second notification in batch"
+      },
+      {
+        "to": "ExponentPushToken[ZZZZZZZZZZZZZZZZZZZZZ]",
+        "title": "Batch Message 3",
+        "body": "This is the third notification in batch"
+      }
+    ]
+  }' 
