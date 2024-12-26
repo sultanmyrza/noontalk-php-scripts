@@ -6,7 +6,7 @@ This PHP script handles push notifications for the Noon Talk application using [
 
 1. Start the PHP development server:
 ```bash
-php -S localhost:8080
+php -S 0.0.0.0:8080
 ```
 
 ## Testing the API
