@@ -1,27 +1,33 @@
 <?php
 
 /**
- * Simple REST API for Sending Push Notifications
+ * Simple REST API for Sending Push Notifications using Expo's HTTP/2 API
+ * 
+ * This script provides three different methods for sending push notifications:
+ * 1. Single notification: Send one notification at a time
+ * 2. Batch notifications: Send up to 100 notifications in a single request
+ * 3. Gzip compressed notifications: Send batch notifications with compression for bandwidth efficiency
  * 
  * Endpoints:
- * 1. POST /send-single: Send a single notification.
- * 2. POST /send-batch: Send multiple notifications.
- * 3. POST /send-gzip: Send multiple notifications with gzip compression.
+ * - POST /send-single: Send a single notification
+ * - POST /send-batch: Send multiple notifications (up to 100)
+ * - POST /send-gzip: Send multiple notifications with gzip compression
  * 
  * Requirements:
  * - PHP 7.4 or later
- * - cURL enabled
- * - Gzip support (default in most PHP installations)
+ * - cURL with HTTP/2 support
+ * - Gzip support (for compression endpoint)
  */
 
 // Set content type to JSON
 header('Content-Type: application/json');
 
 /**
- * Function to handle HTTP responses.
+ * Function to handle HTTP responses
  *
- * @param int $statusCode HTTP status code.
- * @param array|string $data Response data.
+ * @param int $statusCode HTTP status code
+ * @param array|string $data Response data
+ * @return never
  */
 function respond(int $statusCode, $data)
 {
@@ -30,8 +36,17 @@ function respond(int $statusCode, $data)
     exit;
 }
 
-// Define the functions for sending push notifications
-
+/**
+ * Send a single push notification to Expo's Push API
+ * 
+ * This is the simplest method for sending notifications. Use this when you only need
+ * to send one notification at a time.
+ *
+ * @param string $to The Expo Push Token (e.g., ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx])
+ * @param string $title The notification title
+ * @param string $body The notification message
+ * @return array Response containing HTTP code and API response
+ */
 function sendPushNotification(string $to, string $title, string $body): array
 {
     // Expo Push API endpoint
@@ -66,6 +81,18 @@ function sendPushNotification(string $to, string $title, string $body): array
     ];
 }
 
+/**
+ * Send multiple push notifications in a single batch request
+ * 
+ * Benefits over single notifications:
+ * - More efficient for sending multiple notifications
+ * - Reduces number of HTTP requests
+ * - Can send up to 100 notifications in one request
+ * - Better performance for bulk notifications
+ *
+ * @param array $notifications Array of notification objects, each containing 'to', 'title', and 'body'
+ * @return array Response containing HTTP code and API response
+ */
 function sendBatchPushNotifications(array $notifications): array
 {
     $url = "https://exp.host/--/api/v2/push/send";
@@ -93,6 +120,21 @@ function sendBatchPushNotifications(array $notifications): array
     ];
 }
 
+/**
+ * Send multiple push notifications with gzip compression
+ * 
+ * Benefits over regular batch:
+ * - Significantly reduced bandwidth usage (especially for large batches)
+ * - Faster transmission of large payloads
+ * - Recommended for sending large numbers of notifications
+ * - Useful in bandwidth-constrained environments
+ * 
+ * Note: The actual payload is compressed using gzip before sending,
+ * which can reduce the data size by up to 70-80% depending on content.
+ *
+ * @param array $notifications Array of notification objects, each containing 'to', 'title', and 'body'
+ * @return array Response containing HTTP code and API response
+ */
 function sendGzipCompressedPushNotifications(array $notifications): array
 {
     $url = "https://exp.host/--/api/v2/push/send";
