@@ -45,9 +45,10 @@ function respond(int $statusCode, $data)
  * @param string $to The Expo Push Token (e.g., ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx])
  * @param string $title The notification title
  * @param string $body The notification message
+ * @param array|null $data Optional custom data to be delivered to the app
  * @return array Response containing HTTP code and API response
  */
-function sendPushNotification(string $to, string $title, string $body): array
+function sendPushNotification(string $to, string $title, string $body, ?array $data = null): array
 {
     // Expo Push API endpoint
     $url = "https://exp.host/--/api/v2/push/send";
@@ -58,18 +59,23 @@ function sendPushNotification(string $to, string $title, string $body): array
         "Content-Type: application/json"
     ];
 
-    $data = [
+    $payload = [
         "to" => $to,
         "title" => $title,
         "body" => $body
     ];
+
+    // Add data field if provided
+    if ($data !== null) {
+        $payload["data"] = $data;
+    }
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -195,7 +201,8 @@ switch ($requestUri) {
             respond(400, ["error" => "Missing required fields: to, title, body."]);
         }
 
-        $response = sendPushNotification($data['to'], $data['title'], $data['body']);
+        $customData = $data['data'] ?? null;
+        $response = sendPushNotification($data['to'], $data['title'], $data['body'], $customData);
         respond($response["httpCode"], $response["response"]);
         break;
 
