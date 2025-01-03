@@ -3,5 +3,11 @@ curl -X POST http://localhost:8080/send-single \
   -d '{
     "to": "ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]",
     "title": "Hello User",
-    "body": "This is a test notification message"
+    "body": "This is a test notification message",
+    "data": {
+      "messageId": "12345",
+      "type": "welcome_message",
+      "timestamp": 1648236589,
+      "additionalInfo": "Custom data example"
+    }
   }' 
