@@ -1,0 +1,18 @@
+curl -X POST http://localhost:8080/send-headless \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]",
+    "_contentAvailable": true,
+    "priority": "high",
+    "data": {
+      "content-available": 1,
+      "messageId": "headless_1",
+      "type": "background_sync",
+      "timestamp": 1648236589,
+      "operation": "sync_data",
+      "additionalData": {
+        "syncType": "full",
+        "lastSyncTimestamp": 1648236000
+      }
+    }
+  }' 

@@ -191,6 +191,62 @@ function sendGzipCompressedPushNotifications(array $notifications): array
     ];
 }
 
+/**
+ * Send a headless push notification
+ * 
+ * Benefits:
+ * - No visible notification to the user
+ * - Useful for data synchronization
+ * - Can wake up the app in the background
+ * - Ideal for silent content updates
+ *
+ * @param array $notification The notification payload
+ * @return array Response containing HTTP code and API response
+ */
+function sendHeadlessPushNotification(array $notification): array
+{
+    // Validate required fields
+    if (!isset($notification['to'])) {
+        return [
+            "httpCode" => 400,
+            "response" => ["error" => "Missing required field: to"]
+        ];
+    }
+
+    // Ensure this is a headless notification by setting required fields
+    $notification['_contentAvailable'] = true;
+    $notification['content_available'] = true;
+
+    // Remove visual notification fields if present
+    unset($notification['title']);
+    unset($notification['body']);
+    unset($notification['sound']);
+
+    $url = "https://exp.host/--/api/v2/push/send";
+
+    $headers = [
+        "Host: exp.host",
+        "Accept: application/json",
+        "Content-Type: application/json"
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($notification));
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    return [
+        "httpCode" => $httpCode,
+        "response" => json_decode($response, true)
+    ];
+}
+
 // Route based on the request URI
 $requestUri = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
@@ -225,6 +281,11 @@ switch ($requestUri) {
             respond(400, ["error" => "Missing or invalid notifications field."]);
         }
         $response = sendGzipCompressedPushNotifications($data['notifications']);
+        respond($response["httpCode"], $response["response"]);
+        break;
+
+    case '/send-headless':
+        $response = sendHeadlessPushNotification($data);
         respond($response["httpCode"], $response["response"]);
         break;
 

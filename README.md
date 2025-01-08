@@ -72,6 +72,30 @@ curl -X POST http://localhost:8080/send-batch \
 ### 3. Send Gzipped Notifications
 Use `send-gzip.curl` for sending compressed notification data with the same payload format as batch notifications.
 
+### 4. Send Headless Notifications
+Use `send-headless.curl` for sending silent background notifications that don't display any visual alerts:
+```bash
+curl -X POST http://localhost:8080/send-headless \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]",
+    "_contentAvailable": true,
+    "data": {
+      "content-available": 1,
+      "messageId": "headless_1",
+      "type": "background_sync",
+      "timestamp": 1648236589,
+      "operation": "sync_data"
+    }
+  }'
+```
+
+Headless notifications are useful for:
+- Silent background data synchronization
+- Triggering background tasks
+- Updating app content without user interaction
+- Maintaining real-time data consistency
+
 ## Supported Notification Fields
 
 The API supports all Expo Push Notification fields, including but not limited to:
