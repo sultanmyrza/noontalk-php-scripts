@@ -5,12 +5,26 @@ curl -X POST http://localhost:8080/send-batch \
       {
         "to": "ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]",
         "title": "Batch Message 1",
-        "body": "This is the first notification in batch"
+        "body": "This is the first notification in batch",
+        "_contentAvailable": true,
+        "priority": "high",
+        "data": {
+          "content-available": 1,
+          "messageId": "batch_1",
+          "type": "batch_notification"
+        }
       },
       {
         "to": "ExponentPushToken[YYYYYYYYYYYYYYYYYYYYY]",
         "title": "Batch Message 2",
-        "body": "This is the second notification in batch"
+        "body": "This is the second notification in batch",
+        "_contentAvailable": true,
+        "priority": "high",
+        "data": {
+          "content-available": 1,
+          "messageId": "batch_2",
+          "type": "batch_notification"
+        }
       }
     ]
   }' 

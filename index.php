@@ -42,14 +42,19 @@ function respond(int $statusCode, $data)
  * This is the simplest method for sending notifications. Use this when you only need
  * to send one notification at a time.
  *
- * @param string $to The Expo Push Token (e.g., ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx])
- * @param string $title The notification title
- * @param string $body The notification message
- * @param array|null $data Optional custom data to be delivered to the app
+ * @param array $notification The notification payload
  * @return array Response containing HTTP code and API response
  */
-function sendPushNotification(string $to, string $title, string $body, ?array $data = null): array
+function sendPushNotification(array $notification): array
 {
+    // Validate required fields
+    if (!isset($notification['to'])) {
+        return [
+            "httpCode" => 400,
+            "response" => ["error" => "Missing required field: to"]
+        ];
+    }
+
     // Expo Push API endpoint
     $url = "https://exp.host/--/api/v2/push/send";
 
@@ -59,23 +64,12 @@ function sendPushNotification(string $to, string $title, string $body, ?array $d
         "Content-Type: application/json"
     ];
 
-    $payload = [
-        "to" => $to,
-        "title" => $title,
-        "body" => $body
-    ];
-
-    // Add data field if provided
-    if ($data !== null) {
-        $payload["data"] = $data;
-    }
-
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($notification));
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -96,11 +90,21 @@ function sendPushNotification(string $to, string $title, string $body, ?array $d
  * - Can send up to 100 notifications in one request
  * - Better performance for bulk notifications
  *
- * @param array $notifications Array of notification objects, each containing 'to', 'title', and 'body'
+ * @param array $notifications Array of notification objects
  * @return array Response containing HTTP code and API response
  */
 function sendBatchPushNotifications(array $notifications): array
 {
+    // Validate required fields for each notification
+    foreach ($notifications as $notification) {
+        if (!isset($notification['to'])) {
+            return [
+                "httpCode" => 400,
+                "response" => ["error" => "Each notification must have a 'to' field"]
+            ];
+        }
+    }
+
     $url = "https://exp.host/--/api/v2/push/send";
 
     $headers = [
@@ -134,15 +138,22 @@ function sendBatchPushNotifications(array $notifications): array
  * - Faster transmission of large payloads
  * - Recommended for sending large numbers of notifications
  * - Useful in bandwidth-constrained environments
- * 
- * Note: The actual payload is compressed using gzip before sending,
- * which can reduce the data size by up to 70-80% depending on content.
  *
- * @param array $notifications Array of notification objects, each containing 'to', 'title', and 'body'
+ * @param array $notifications Array of notification objects
  * @return array Response containing HTTP code and API response
  */
 function sendGzipCompressedPushNotifications(array $notifications): array
 {
+    // Validate required fields for each notification
+    foreach ($notifications as $notification) {
+        if (!isset($notification['to'])) {
+            return [
+                "httpCode" => 400,
+                "response" => ["error" => "Each notification must have a 'to' field"]
+            ];
+        }
+    }
+
     $url = "https://exp.host/--/api/v2/push/send";
 
     $headers = [
@@ -156,8 +167,8 @@ function sendGzipCompressedPushNotifications(array $notifications): array
     $jsonPayload = json_encode($notifications);
     if ($jsonPayload === false) {
         return [
-            "httpCode" => 0,
-            "response" => "Failed to encode notifications to JSON: " . json_last_error_msg()
+            "httpCode" => 400,
+            "response" => ["error" => "Failed to encode notifications to JSON: " . json_last_error_msg()]
         ];
     }
     $compressedPayload = gzencode($jsonPayload);
@@ -197,12 +208,7 @@ if ($data === null) {
 
 switch ($requestUri) {
     case '/send-single':
-        if (!isset($data['to'], $data['title'], $data['body'])) {
-            respond(400, ["error" => "Missing required fields: to, title, body."]);
-        }
-
-        $customData = $data['data'] ?? null;
-        $response = sendPushNotification($data['to'], $data['title'], $data['body'], $customData);
+        $response = sendPushNotification($data);
         respond($response["httpCode"], $response["response"]);
         break;
 
@@ -210,7 +216,6 @@ switch ($requestUri) {
         if (!isset($data['notifications']) || !is_array($data['notifications'])) {
             respond(400, ["error" => "Missing or invalid notifications field."]);
         }
-
         $response = sendBatchPushNotifications($data['notifications']);
         respond($response["httpCode"], $response["response"]);
         break;
@@ -219,7 +224,6 @@ switch ($requestUri) {
         if (!isset($data['notifications']) || !is_array($data['notifications'])) {
             respond(400, ["error" => "Missing or invalid notifications field."]);
         }
-
         $response = sendGzipCompressedPushNotifications($data['notifications']);
         respond($response["httpCode"], $response["response"]);
         break;

@@ -21,7 +21,16 @@ curl -X POST http://localhost:8080/send-single \
   -d '{
     "to": "ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]",
     "title": "Hello User",
-    "body": "This is a test notification message"
+    "body": "This is a test notification message",
+    "_contentAvailable": true,
+    "priority": "high",
+    "data": {
+      "content-available": 1,
+      "messageId": "12345",
+      "type": "testing_foreground_notification",
+      "timestamp": 1648236589,
+      "additionalInfo": "Custom data example"
+    }
   }'
 ```
 
@@ -35,19 +44,45 @@ curl -X POST http://localhost:8080/send-batch \
       {
         "to": "ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]",
         "title": "Batch Message 1",
-        "body": "This is the first notification in batch"
+        "body": "This is the first notification in batch",
+        "_contentAvailable": true,
+        "priority": "high",
+        "data": {
+          "content-available": 1,
+          "messageId": "batch_1",
+          "type": "batch_notification"
+        }
       },
       {
         "to": "ExponentPushToken[YYYYYYYYYYYYYYYYYYYYY]",
         "title": "Batch Message 2",
-        "body": "This is the second notification in batch"
+        "body": "This is the second notification in batch",
+        "_contentAvailable": true,
+        "priority": "high",
+        "data": {
+          "content-available": 1,
+          "messageId": "batch_2",
+          "type": "batch_notification"
+        }
       }
     ]
   }'
 ```
 
 ### 3. Send Gzipped Notifications
-Use `send-gzip.curl` for sending compressed notification data.
+Use `send-gzip.curl` for sending compressed notification data with the same payload format as batch notifications.
+
+## Supported Notification Fields
+
+The API supports all Expo Push Notification fields, including but not limited to:
+
+- `to`: (Required) The Expo push token
+- `title`: The title of the notification
+- `body`: The message body
+- `_contentAvailable`: Boolean for content-available flag
+- `priority`: Notification priority ("default", "normal", "high")
+- `data`: Custom data object for your application
+- Any other fields supported by Expo's Push API
 
 ## Note
 - Replace the `ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]` with actual Expo push tokens
