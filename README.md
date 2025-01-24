@@ -108,7 +108,41 @@ The API supports all Expo Push Notification fields, including but not limited to
 - `data`: Custom data object for your application
 - Any other fields supported by Expo's Push API
 
+## File Decryption Endpoint
+
+The server also supports decrypting and saving encrypted files using AES-256-CBC encryption.
+
+### Testing File Decryption
+Use curl to test file decryption:
+```bash
+curl -X POST http://localhost:8080/decrypt-file \
+  -F "file=@path/to/your/encrypted/file.txt"
+```
+
+The server will:
+1. Receive the encrypted file
+2. Decrypt it using AES-256-CBC with the configured key and IV
+3. Save the decrypted content to the `tmp-uploads` directory
+4. Return the path to the decrypted file
+
+### Response Format
+Success response:
+```json
+{
+    "message": "File uploaded and decrypted successfully!",
+    "path": "/path/to/decrypted/file.txt"
+}
+```
+
+Error response:
+```json
+{
+    "error": "Error message here"
+}
+```
+
 ## Note
 - Replace the `ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]` with actual Expo push tokens
 - Ensure you have PHP installed on your system
 - The server must be running on port 8080 for the curl commands to work
+- Make sure the `tmp-uploads` directory is writable by the web server

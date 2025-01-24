@@ -3,21 +3,36 @@
 /**
  * Simple REST API for Sending Push Notifications using Expo's HTTP/2 API
  * 
- * This script provides three different methods for sending push notifications:
+ * This script provides the following functionalities:
  * 1. Single notification: Send one notification at a time
  * 2. Batch notifications: Send up to 100 notifications in a single request
  * 3. Gzip compressed notifications: Send batch notifications with compression for bandwidth efficiency
+ * 4. Headless notifications: Send silent background notifications
+ * 5. File decryption: Decrypt and save uploaded encrypted files
  * 
  * Endpoints:
  * - POST /send-single: Send a single notification
  * - POST /send-batch: Send multiple notifications (up to 100)
  * - POST /send-gzip: Send multiple notifications with gzip compression
+ * - POST /send-headless: Send silent background notifications
+ * - POST /decrypt-file: Upload, decrypt and save encrypted files
  * 
  * Requirements:
  * - PHP 7.4 or later
  * - cURL with HTTP/2 support
  * - Gzip support (for compression endpoint)
+ * - OpenSSL support (for file decryption)
  */
+
+// Configuration for file decryption
+define('AES_KEY', "Noon$Talker$2025.01.24"); // 32 bytes
+define('AES_IV', "1234567890123456"); // 16 bytes
+define('UPLOAD_DIR', __DIR__ . '/tmp-uploads/');
+
+// Ensure upload directory exists
+if (!is_dir(UPLOAD_DIR)) {
+    mkdir(UPLOAD_DIR, 0777, true);
+}
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -247,6 +262,57 @@ function sendHeadlessPushNotification(array $notification): array
     ];
 }
 
+/**
+ * Handle file decryption and saving
+ * 
+ * @return array Response containing status and message/error
+ */
+function handleFileDecryption(): array
+{
+    if (empty($_FILES['file']['tmp_name'])) {
+        return [
+            "httpCode" => 400,
+            "response" => ["error" => "No file uploaded."]
+        ];
+    }
+
+    $uploadedFile = $_FILES['file']['tmp_name'];
+    $encryptedContent = file_get_contents($uploadedFile);
+
+    // Decrypt content
+    $decryptedContent = openssl_decrypt(
+        $encryptedContent,
+        "aes-256-cbc",
+        AES_KEY,
+        OPENSSL_RAW_DATA,
+        AES_IV
+    );
+
+    if ($decryptedContent === false) {
+        return [
+            "httpCode" => 400,
+            "response" => ["error" => "Failed to decrypt file."]
+        ];
+    }
+
+    // Save decrypted content
+    $decryptedFilePath = UPLOAD_DIR . 'decrypted_' . time() . '.txt';
+    if (!file_put_contents($decryptedFilePath, $decryptedContent)) {
+        return [
+            "httpCode" => 500,
+            "response" => ["error" => "Failed to save decrypted file."]
+        ];
+    }
+
+    return [
+        "httpCode" => 200,
+        "response" => [
+            "message" => "File uploaded and decrypted successfully!",
+            "path" => $decryptedFilePath
+        ]
+    ];
+}
+
 // Route based on the request URI
 $requestUri = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
@@ -286,6 +352,11 @@ switch ($requestUri) {
 
     case '/send-headless':
         $response = sendHeadlessPushNotification($data);
+        respond($response["httpCode"], $response["response"]);
+        break;
+
+    case '/decrypt-file':
+        $response = handleFileDecryption();
         respond($response["httpCode"], $response["response"]);
         break;
 
