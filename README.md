@@ -141,8 +141,61 @@ Error response:
 }
 ```
 
+## React Native File Upload Endpoint
+
+The server provides a dedicated endpoint for handling encrypted file uploads from React Native applications.
+
+### Endpoint Details
+- URL: `/upload-encrypted`
+- Method: `PATCH`
+- Headers:
+  - `Content-Type`: File MIME type (e.g., 'video/mp4', 'image/jpeg')
+  - `X-Encrypted`: Set to 'true'
+
+### Features
+- Accepts AES-256-CBC encrypted binary content
+- Automatically detects file type from Content-Type header
+- Supports video and image uploads
+- Handles base64 encoded content
+- Saves decrypted files with appropriate extensions
+
+### Example Usage with React Native
+```javascript
+const task = FileSystem.createUploadTask(
+  'http://localhost:8080/upload-encrypted',
+  encryptedFileUri,
+  {
+    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+    headers: {
+      "Content-Type": "video/mp4",
+      "X-Encrypted": "true",
+    },
+    httpMethod: "PATCH",
+  }
+);
+
+const result = await task.uploadAsync();
+```
+
+### Response Format
+Success response:
+```json
+{
+    "message": "File uploaded and decrypted successfully!",
+    "path": "/path/to/decrypted/file.mp4"
+}
+```
+
+Error response:
+```json
+{
+    "error": "Error message here"
+}
+```
+
 ## Note
 - Replace the `ExponentPushToken[XXXXXXXXXXXXXXXXXXXXX]` with actual Expo push tokens
 - Ensure you have PHP installed on your system
 - The server must be running on port 8080 for the curl commands to work
 - Make sure the `tmp-uploads` directory is writable by the web server
+- For encrypted uploads, ensure your AES key and IV match between client and server

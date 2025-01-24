@@ -16,6 +16,7 @@
  * - POST /send-gzip: Send multiple notifications with gzip compression
  * - POST /send-headless: Send silent background notifications
  * - POST /decrypt-file: Upload, decrypt and save encrypted files
+ * - PATCH /upload-encrypted: Handle encrypted file upload from React Native app
  * 
  * Requirements:
  * - PHP 7.4 or later
@@ -313,18 +314,94 @@ function handleFileDecryption(): array
     ];
 }
 
+/**
+ * Handle encrypted file upload from React Native app
+ * 
+ * @return array Response containing status and message/error
+ */
+function handleEncryptedUpload(): array
+{
+    // Verify it's an encrypted upload
+    if (!isset($_SERVER['HTTP_X_ENCRYPTED']) || $_SERVER['HTTP_X_ENCRYPTED'] !== 'true') {
+        return [
+            "httpCode" => 400,
+            "response" => ["error" => "Missing encryption header."]
+        ];
+    }
+
+    // Get the raw POST data (binary content)
+    $encryptedContent = file_get_contents('php://input');
+    if (empty($encryptedContent)) {
+        return [
+            "httpCode" => 400,
+            "response" => ["error" => "No content received."]
+        ];
+    }
+
+    // Decrypt content
+    $decryptedContent = openssl_decrypt(
+        $encryptedContent,
+        "aes-256-cbc",
+        AES_KEY,
+        OPENSSL_RAW_DATA,
+        AES_IV
+    );
+
+    if ($decryptedContent === false) {
+        return [
+            "httpCode" => 400,
+            "response" => ["error" => "Failed to decrypt content."]
+        ];
+    }
+
+    // Get content type and determine file extension
+    $contentType = $_SERVER['HTTP_CONTENT_TYPE'] ?? 'video/mp4';
+    $extension = match ($contentType) {
+        'video/mp4' => 'mp4',
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        default => 'mp4'
+    };
+
+    // Save decrypted content with proper extension
+    $decryptedFilePath = UPLOAD_DIR . 'upload_' . time() . '.' . $extension;
+    if (!file_put_contents($decryptedFilePath, base64_decode($decryptedContent))) {
+        return [
+            "httpCode" => 500,
+            "response" => ["error" => "Failed to save decrypted file."]
+        ];
+    }
+
+    return [
+        "httpCode" => 200,
+        "response" => [
+            "message" => "File uploaded and decrypted successfully!",
+            "path" => $decryptedFilePath
+        ]
+    ];
+}
+
 // Route based on the request URI
 $requestUri = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
 
-if ($method !== 'POST') {
-    respond(405, ["error" => "Only POST requests are allowed."]);
+// Allow both POST and PATCH methods
+if ($method !== 'POST' && $method !== 'PATCH') {
+    respond(405, ["error" => "Only POST and PATCH requests are allowed."]);
 }
 
+// Handle PATCH request for file upload separately
+if ($method === 'PATCH' && $requestUri === '/upload-encrypted') {
+    $response = handleEncryptedUpload();
+    respond($response["httpCode"], $response["response"]);
+    exit;
+}
+
+// For POST requests, parse JSON payload
 $requestBody = file_get_contents('php://input');
 $data = json_decode($requestBody, true);
 
-if ($data === null) {
+if ($data === null && $method === 'POST') {
     respond(400, ["error" => "Invalid JSON payload."]);
 }
 
@@ -357,6 +434,11 @@ switch ($requestUri) {
 
     case '/decrypt-file':
         $response = handleFileDecryption();
+        respond($response["httpCode"], $response["response"]);
+        break;
+
+    case '/upload-encrypted':
+        $response = handleEncryptedUpload();
         respond($response["httpCode"], $response["response"]);
         break;
 
