@@ -26,7 +26,7 @@
  */
 
 // Configuration for file decryption
-define('AES_KEY', "Noon$Talker$2025.01.24"); // 32 bytes
+define('AES_KEY', 'Noon$Talker$2025.01.24'); // 32 bytes
 define('AES_IV', "1234567890123456"); // 16 bytes
 define('UPLOAD_DIR', __DIR__ . '/tmp-uploads/');
 
